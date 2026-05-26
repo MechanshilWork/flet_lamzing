@@ -3,10 +3,10 @@ name: Build and Release Linux App
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags starting with 'v', e.g., v1.0.0
+      - 'v*'
 
 permissions:
-  contents: write # Needed to create releases
+  contents: write
 
 jobs:
   build:
@@ -38,6 +38,8 @@ jobs:
       - name: Package Linux app
         run: |
           cd build
+          mv linux flet_lamzing
+          tar -czvf ../app-linux.tar.gz flet_lamzing
           
       - name: Create Release and Upload Asset
         env:
