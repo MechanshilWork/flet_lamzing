@@ -26,11 +26,14 @@ def get_app_info():
 def check_for_updates(current_version, repo_name):
     """Checks GitHub for a newer release."""
     url = GITHUB_API_URL.format(repo=repo_name)
+    print(f"Checking URL: {url}")
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Flet-Updater'})
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode())
             latest_version = data.get("tag_name")
+            print(f"Latest version: {latest_version}")
+            print(f"Current version: {current_version}")
             
             if latest_version and latest_version != current_version:
                 assets = data.get("assets", [])

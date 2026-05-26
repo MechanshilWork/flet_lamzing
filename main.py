@@ -5,6 +5,7 @@ CURRENT_VERSION = "v1.0.0"
 GITHUB_REPO = "MechanshilWork/flet_lamzing"
 
 def main(page: ft.Page):
+    print("App started!")
     page.title = "Self-Updating App"
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
@@ -43,6 +44,7 @@ def main(page: ft.Page):
         page.update()
 
     def on_check_updates(e):
+        print("Button clicked!")
         update_button.disabled = True
         status_text.value = "Checking for updates..."
         page.update()
