@@ -33,7 +33,7 @@ jobs:
           
       - name: Build Flet app for Linux
         run: |
-          flet build linux
+          flet build linux --yes
           
       - name: Package Linux app
         run: |
