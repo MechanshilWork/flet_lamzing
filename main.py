@@ -16,6 +16,33 @@ def main(page: ft.Page):
     progress_bar = ft.ProgressBar(visible=False, width=300, value=0)
     progress_text = ft.Text(visible=False)
 
+    download_url_ref = [None]
+
+    def on_update_clicked(e):
+        update_button.disabled = True
+        status_text.value = "Downloading and installing update..."
+        progress_bar.visible = True
+        progress_text.visible = True
+        progress_bar.value = 0
+        progress_text.value = "0%"
+        page.update()
+        
+        def progress_callback(blocks, block_size, total_size):
+            if total_size > 0:
+                percent = (blocks * block_size) / total_size
+                if percent > 1.0:
+                    percent = 1.0
+                progress_bar.value = percent
+                progress_text.value = f"{int(percent * 100)}%"
+                page.update()
+
+        success = perform_update(download_url_ref[0], progress_callback)
+        if success:
+            status_text.value = "Update applied (Dev Mode). Restart manually."
+        else:
+            status_text.value = "Update failed!"
+        page.update()
+
     def on_check_updates(e):
         update_button.disabled = True
         status_text.value = "Checking for updates..."
@@ -24,32 +51,15 @@ def main(page: ft.Page):
         latest_version, download_url = check_for_updates(CURRENT_VERSION, GITHUB_REPO)
 
         if latest_version and download_url:
-            status_text.value = f"Update {latest_version} found! Downloading and installing..."
-            progress_bar.visible = True
-            progress_text.visible = True
-            progress_bar.value = 0
-            progress_text.value = "0%"
-            page.update()
-            
-            def progress_callback(blocks, block_size, total_size):
-                if total_size > 0:
-                    percent = (blocks * block_size) / total_size
-                    if percent > 1.0:
-                        percent = 1.0
-                    progress_bar.value = percent
-                    progress_text.value = f"{int(percent * 100)}%"
-                    page.update()
-
-            # Start the update process
-            success = perform_update(download_url, progress_callback)
-            if success:
-                status_text.value = "Update applied (Dev Mode). Restart manually."
-            else:
-                status_text.value = "Update failed!"
+            status_text.value = f"Update {latest_version} found!"
+            download_url_ref[0] = download_url
+            update_button.text = "Update"
+            update_button.on_click = on_update_clicked
+            update_button.disabled = False
         else:
             status_text.value = f"You are up to date! ({CURRENT_VERSION})"
+            update_button.disabled = False
         
-        update_button.disabled = False
         page.update()
 
     update_button.on_click = on_check_updates
