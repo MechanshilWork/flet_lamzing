@@ -1,7 +1,7 @@
 import flet as ft
 from updater import check_for_updates, perform_update
 
-CURRENT_VERSION = "v2.0.0"
+CURRENT_VERSION = "v2.0.1"
 GITHUB_REPO = "MechanshilWork/flet_lamzing"
 
 def main(page: ft.Page):
