@@ -1,21 +1,18 @@
 import flet as ft
 from updater import check_for_updates, perform_update
 
-CURRENT_VERSION = "v1.0.1"
+CURRENT_VERSION = "v1.0.0"
 GITHUB_REPO = "MechanshilWork/flet_lamzing"
 
 def main(page: ft.Page):
-    print("App started!")
     page.title = "Self-Updating App"
     page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
     status_text = ft.Text(f"Current Version: {CURRENT_VERSION}", size=20, weight=ft.FontWeight.BOLD)
-    update_button = ft.Button("Check for Updates", icon=ft.Icons.SYSTEM_UPDATE)
     progress_bar = ft.ProgressBar(visible=False, width=300, value=0)
     progress_text = ft.Text(visible=False)
-
     download_url_ref = [None]
 
     def on_update_clicked(e):
@@ -44,7 +41,6 @@ def main(page: ft.Page):
         page.update()
 
     def on_check_updates(e):
-        print("Button clicked!")
         update_button.disabled = True
         status_text.value = "Checking for updates..."
         page.update()
@@ -54,23 +50,32 @@ def main(page: ft.Page):
         if latest_version and download_url:
             status_text.value = f"Update {latest_version} found!"
             download_url_ref[0] = download_url
-            update_button.text = "Update"
-            update_button.on_click = on_update_clicked
-            update_button.disabled = False
+            # Replace button entirely
+            page.controls[0].controls[3] = ft.FilledButton(
+                "Update",
+                icon=ft.Icons.DOWNLOAD,
+                on_click=on_update_clicked
+            )
         else:
             status_text.value = f"You are up to date! ({CURRENT_VERSION})"
             update_button.disabled = False
 
         page.update()
 
-    update_button.on_click = on_check_updates
+    update_button = ft.FilledButton("Check for Updates", icon=ft.Icons.SYSTEM_UPDATE, on_click=on_check_updates)
 
     page.add(
-        ft.Icon(ft.Icons.ROCKET_LAUNCH, size=50, color=ft.Colors.BLUE_400),
-        status_text,
-        ft.Container(height=20),
-        update_button,
-        ft.Row([progress_bar, progress_text], alignment=ft.MainAxisAlignment.CENTER)
+        ft.Column(
+            controls=[
+                ft.Icon(ft.Icons.ROCKET_LAUNCH, size=50, color=ft.Colors.BLUE_400),
+                status_text,
+                ft.Container(height=20),
+                update_button,
+                ft.Row([progress_bar, progress_text], alignment=ft.MainAxisAlignment.CENTER)
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+        )
     )
 
 if __name__ == '__main__':

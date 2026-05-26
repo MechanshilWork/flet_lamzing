@@ -6,14 +6,13 @@ import urllib.request
 import json
 import subprocess
 
-TEMP_DIR_BASE = "/mnt/hdd/update_tmp"
+TEMP_DIR_BASE = os.path.join(os.path.expanduser("~"), ".local", "share", "flet_lamzing", "update_tmp")
 GITHUB_API_URL = "https://api.github.com/repos/{repo}/releases/latest"
 
 def get_app_info():
     """Returns the app directory and executable path."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     current = base_dir
-    # Heuristic: Walk up until we find the app root containing 'data' and the executable
     while current != '/':
         if os.path.isdir(os.path.join(current, 'data')):
             for f in os.listdir(current):
@@ -34,7 +33,7 @@ def check_for_updates(current_version, repo_name):
             latest_version = data.get("tag_name")
             print(f"Latest version: {latest_version}")
             print(f"Current version: {current_version}")
-            
+
             if latest_version and latest_version != current_version:
                 assets = data.get("assets", [])
                 for asset in assets:
@@ -50,20 +49,22 @@ def perform_update(download_url, progress_callback=None):
         os.makedirs(TEMP_DIR_BASE, exist_ok=True)
         tar_path = os.path.join(TEMP_DIR_BASE, "update.tar.gz")
         extract_path = os.path.join(TEMP_DIR_BASE, "extracted")
-        
+
         if os.path.exists(extract_path):
             shutil.rmtree(extract_path)
         os.makedirs(extract_path)
 
         print(f"Downloading update from {download_url}...")
         urllib.request.urlretrieve(download_url, tar_path, reporthook=progress_callback)
-        
+
         print("Extracting update...")
         with tarfile.open(tar_path, "r:gz") as tar:
             tar.extractall(path=extract_path)
-            
+
         app_dir, current_exe = get_app_info()
-        
+        print(f"App dir: {app_dir}")
+        print(f"Current exe: {current_exe}")
+
         # In a development environment we don't want to replace ourselves
         if "python" in os.path.basename(current_exe).lower() and app_dir == os.path.dirname(os.path.abspath(__file__)):
             print("Running from source. Update replacement skipped.")
@@ -75,12 +76,9 @@ echo "Waiting for app to close..."
 sleep 2
 
 echo "Replacing files in {app_dir}..."
-# Remove old files except the script
 rm -rf "{app_dir}"/*
 
 echo "Copying new files from {extract_path}..."
-# The tarball might extract into a subdirectory (like build/linux/)
-# Find the first directory that looks like the app root (has 'data' folder)
 NEW_APP_DIR="{extract_path}"
 for d in $(find "{extract_path}" -type d -name "data"); do
     NEW_APP_DIR=$(dirname "$d")
@@ -99,9 +97,9 @@ echo "Update finished."
 """
         with open(script_path, "w") as f:
             f.write(script_content)
-            
+
         os.chmod(script_path, 0o755)
-        
+
         print("Starting update script and exiting...")
         subprocess.Popen([script_path], start_new_session=True)
         sys.exit(0)
