@@ -1,9 +1,8 @@
 import flet as ft
 from updater import check_for_updates, perform_update
 
-# --- Configuration ---
 CURRENT_VERSION = "v1.0.0"
-GITHUB_REPO = "Mechanshil/flet_lamzing"
+GITHUB_REPO = "MechanshilWork/flet_lamzing"
 
 def main(page: ft.Page):
     page.title = "Self-Updating App"
@@ -12,7 +11,7 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
     status_text = ft.Text(f"Current Version: {CURRENT_VERSION}", size=20, weight=ft.FontWeight.BOLD)
-    update_button = ft.ElevatedButton("Check for Updates", icon=ft.icons.SYSTEM_UPDATE)
+    update_button = ft.Button("Check for Updates", icon=ft.Icons.SYSTEM_UPDATE)
     progress_bar = ft.ProgressBar(visible=False, width=300, value=0)
     progress_text = ft.Text(visible=False)
 
@@ -26,7 +25,7 @@ def main(page: ft.Page):
         progress_bar.value = 0
         progress_text.value = "0%"
         page.update()
-        
+
         def progress_callback(blocks, block_size, total_size):
             if total_size > 0:
                 percent = (blocks * block_size) / total_size
@@ -38,7 +37,7 @@ def main(page: ft.Page):
 
         success = perform_update(download_url_ref[0], progress_callback)
         if success:
-            status_text.value = "Update applied (Dev Mode). Restart manually."
+            status_text.value = "Update applied. Restart manually."
         else:
             status_text.value = "Update failed!"
         page.update()
@@ -59,18 +58,18 @@ def main(page: ft.Page):
         else:
             status_text.value = f"You are up to date! ({CURRENT_VERSION})"
             update_button.disabled = False
-        
+
         page.update()
 
     update_button.on_click = on_check_updates
 
     page.add(
-        ft.Icon(name=ft.icons.ROCKET_LAUNCH, size=50, color=ft.colors.BLUE_400),
+        ft.Icon(ft.Icons.ROCKET_LAUNCH, size=50, color=ft.Colors.BLUE_400),
         status_text,
-        ft.Container(height=20), # Spacer
+        ft.Container(height=20),
         update_button,
         ft.Row([progress_bar, progress_text], alignment=ft.MainAxisAlignment.CENTER)
     )
 
 if __name__ == '__main__':
-    ft.app(target=main)
+    ft.run(main)
