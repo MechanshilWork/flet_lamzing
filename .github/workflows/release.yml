@@ -37,8 +37,7 @@ jobs:
           
       - name: Package Linux app
         run: |
-          cd build/linux
-          tar -czvf ../../app-linux.tar.gz .
+          cd build
           
       - name: Create Release and Upload Asset
         env:

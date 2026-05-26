@@ -13,11 +13,11 @@ def main(page: ft.Page):
 
     status_text = ft.Text(f"Current Version: {CURRENT_VERSION}", size=20, weight=ft.FontWeight.BOLD)
     update_button = ft.ElevatedButton("Check for Updates", icon=ft.icons.SYSTEM_UPDATE)
-    progress_ring = ft.ProgressRing(visible=False, width=20, height=20)
+    progress_bar = ft.ProgressBar(visible=False, width=300, value=0)
+    progress_text = ft.Text(visible=False)
 
     def on_check_updates(e):
         update_button.disabled = True
-        progress_ring.visible = True
         status_text.value = "Checking for updates..."
         page.update()
 
@@ -25,10 +25,23 @@ def main(page: ft.Page):
 
         if latest_version and download_url:
             status_text.value = f"Update {latest_version} found! Downloading and installing..."
+            progress_bar.visible = True
+            progress_text.visible = True
+            progress_bar.value = 0
+            progress_text.value = "0%"
             page.update()
             
+            def progress_callback(blocks, block_size, total_size):
+                if total_size > 0:
+                    percent = (blocks * block_size) / total_size
+                    if percent > 1.0:
+                        percent = 1.0
+                    progress_bar.value = percent
+                    progress_text.value = f"{int(percent * 100)}%"
+                    page.update()
+
             # Start the update process
-            success = perform_update(download_url)
+            success = perform_update(download_url, progress_callback)
             if success:
                 status_text.value = "Update applied (Dev Mode). Restart manually."
             else:
@@ -37,7 +50,6 @@ def main(page: ft.Page):
             status_text.value = f"You are up to date! ({CURRENT_VERSION})"
         
         update_button.disabled = False
-        progress_ring.visible = False
         page.update()
 
     update_button.on_click = on_check_updates
@@ -46,7 +58,8 @@ def main(page: ft.Page):
         ft.Icon(name=ft.icons.ROCKET_LAUNCH, size=50, color=ft.colors.BLUE_400),
         status_text,
         ft.Container(height=20), # Spacer
-        ft.Row([update_button, progress_ring], alignment=ft.MainAxisAlignment.CENTER)
+        update_button,
+        ft.Row([progress_bar, progress_text], alignment=ft.MainAxisAlignment.CENTER)
     )
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ def check_for_updates(current_version, repo_name):
         print(f"Error checking for updates: {e}")
     return None, None
 
-def perform_update(download_url):
+def perform_update(download_url, progress_callback=None):
     """Downloads, extracts, and replaces the app."""
     try:
         os.makedirs(TEMP_DIR_BASE, exist_ok=True)
@@ -53,7 +53,7 @@ def perform_update(download_url):
         os.makedirs(extract_path)
 
         print(f"Downloading update from {download_url}...")
-        urllib.request.urlretrieve(download_url, tar_path)
+        urllib.request.urlretrieve(download_url, tar_path, reporthook=progress_callback)
         
         print("Extracting update...")
         with tarfile.open(tar_path, "r:gz") as tar:
