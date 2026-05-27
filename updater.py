@@ -109,7 +109,6 @@ rm -rf "{app_dir}"/*
 echo "Copying new files from {extract_path}..."
 NEW_APP_DIR="{extract_path}"
 
-# Check if extracted into flet_lamzing subfolder
 if [ -d "{extract_path}/flet_lamzing" ]; then
     NEW_APP_DIR="{extract_path}/flet_lamzing"
 else
@@ -126,6 +125,7 @@ echo "Setting executable permissions..."
 chmod +x "{app_dir}/flet_lamzing"
 
 echo "Restarting application..."
+cd "{app_dir}"
 "{current_exe}" &
 
 echo "Update finished."
