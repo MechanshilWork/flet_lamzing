@@ -11,6 +11,22 @@ GITHUB_API_URL = "https://api.github.com/repos/{repo}/releases/latest"
 
 def get_app_info():
     """Returns the app directory and executable path."""
+    
+    # _ env var always contains the path used to launch the process
+    launched_as = os.environ.get("_", "")
+    print(f"Launched as: {launched_as}")
+    print(f"CWD: {os.getcwd()}")
+
+    if launched_as and "python" not in os.path.basename(launched_as).lower():
+        # If relative path, resolve against PWD env var (original working dir)
+        pwd = os.environ.get("PWD", os.getcwd())
+        exe_path = os.path.normpath(os.path.join(pwd, launched_as))
+        print(f"Resolved exe path: {exe_path}")
+        if os.path.isfile(exe_path) and os.access(exe_path, os.X_OK):
+            print(f"Found exe via _: {exe_path}")
+            return os.path.dirname(exe_path), exe_path
+
+    # Fallback: walk up from __file__ looking for 'data' folder + executable
     base_dir = os.path.dirname(os.path.abspath(__file__))
     current = base_dir
     while current != '/':
@@ -18,8 +34,10 @@ def get_app_info():
             for f in os.listdir(current):
                 p = os.path.join(current, f)
                 if os.path.isfile(p) and os.access(p, os.X_OK) and not p.endswith('.so'):
+                    print(f"Found exe via fallback: {p}")
                     return current, p
         current = os.path.dirname(current)
+
     return base_dir, sys.executable
 
 def check_for_updates(current_version, repo_name):
@@ -76,7 +94,7 @@ def perform_install():
         print(f"Current exe: {current_exe}")
 
         # Skip replacement in dev/source mode
-        if "python" in os.path.basename(current_exe).lower() and app_dir == os.path.dirname(os.path.abspath(__file__)):
+        if "python" in os.path.basename(current_exe).lower():
             print("Running from source. Update replacement skipped.")
             return True
 
@@ -90,15 +108,22 @@ rm -rf "{app_dir}"/*
 
 echo "Copying new files from {extract_path}..."
 NEW_APP_DIR="{extract_path}"
-for d in $(find "{extract_path}" -type d -name "data"); do
-    NEW_APP_DIR=$(dirname "$d")
-    break
-done
 
-cp -r "$NEW_APP_DIR"/* "{app_dir}"/
+# Check if extracted into flet_lamzing subfolder
+if [ -d "{extract_path}/flet_lamzing" ]; then
+    NEW_APP_DIR="{extract_path}/flet_lamzing"
+else
+    for d in $(find "{extract_path}" -type d -name "data"); do
+        NEW_APP_DIR=$(dirname "$d")
+        break
+    done
+fi
+
+echo "Using NEW_APP_DIR: $NEW_APP_DIR"
+cp -r "$NEW_APP_DIR"/. "{app_dir}"/
 
 echo "Setting executable permissions..."
-chmod +x "{app_dir}"/*
+chmod +x "{app_dir}/flet_lamzing"
 
 echo "Restarting application..."
 "{current_exe}" &
