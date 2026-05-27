@@ -43,19 +43,29 @@ def check_for_updates(current_version, repo_name):
         print(f"Error checking for updates: {e}")
     return None, None
 
-def perform_update(download_url, progress_callback=None):
-    """Downloads, extracts, and replaces the app."""
+def download_update(download_url, progress_callback=None):
+    """Downloads the update tar.gz to temp dir."""
     try:
         os.makedirs(TEMP_DIR_BASE, exist_ok=True)
+        tar_path = os.path.join(TEMP_DIR_BASE, "update.tar.gz")
+
+        print(f"Downloading update from {download_url}...")
+        urllib.request.urlretrieve(download_url, tar_path, reporthook=progress_callback)
+        print("Download complete!")
+        return True
+    except Exception as e:
+        print(f"Failed to download: {e}")
+        return False
+
+def perform_install():
+    """Extracts and replaces the app, then restarts."""
+    try:
         tar_path = os.path.join(TEMP_DIR_BASE, "update.tar.gz")
         extract_path = os.path.join(TEMP_DIR_BASE, "extracted")
 
         if os.path.exists(extract_path):
             shutil.rmtree(extract_path)
         os.makedirs(extract_path)
-
-        print(f"Downloading update from {download_url}...")
-        urllib.request.urlretrieve(download_url, tar_path, reporthook=progress_callback)
 
         print("Extracting update...")
         with tarfile.open(tar_path, "r:gz") as tar:
@@ -65,7 +75,7 @@ def perform_update(download_url, progress_callback=None):
         print(f"App dir: {app_dir}")
         print(f"Current exe: {current_exe}")
 
-        # In a development environment we don't want to replace ourselves
+        # Skip replacement in dev/source mode
         if "python" in os.path.basename(current_exe).lower() and app_dir == os.path.dirname(os.path.abspath(__file__)):
             print("Running from source. Update replacement skipped.")
             return True
@@ -105,5 +115,5 @@ echo "Update finished."
         sys.exit(0)
 
     except Exception as e:
-        print(f"Failed to update: {e}")
+        print(f"Failed to install: {e}")
         return False

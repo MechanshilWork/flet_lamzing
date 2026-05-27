@@ -1,7 +1,7 @@
 import flet as ft
-from updater import check_for_updates, perform_update
+from updater import check_for_updates, download_update, perform_install
 
-CURRENT_VERSION = "v2.0.1"
+CURRENT_VERSION = "v1.0.0"
 GITHUB_REPO = "MechanshilWork/flet_lamzing"
 
 def main(page: ft.Page):
@@ -12,17 +12,35 @@ def main(page: ft.Page):
 
     status_text = ft.Text(f"Current Version: {CURRENT_VERSION}", size=20, weight=ft.FontWeight.BOLD)
     progress_bar = ft.ProgressBar(visible=False, width=300, value=0)
-    progress_text = ft.Text(visible=False)
+    progress_text = ft.Text(visible=False, size=12)
     download_url_ref = [None]
 
-    def on_update_clicked(e):
-        update_button.disabled = True
-        status_text.value = "Downloading and installing update..."
-        progress_bar.visible = True
-        progress_text.visible = True
-        progress_bar.value = 0
-        progress_text.value = "0%"
+    def get_column():
+        return page.controls[0]
+
+    def set_button(new_button):
+        col = get_column()
+        col.controls[3] = new_button
         page.update()
+
+    def on_install_clicked(e):
+        status_text.value = "Installing update..."
+        progress_bar.visible = False
+        progress_text.visible = False
+        set_button(ft.FilledButton("Installing...", icon=ft.Icons.SETTINGS, disabled=True))
+
+        success = perform_install()
+        if not success:
+            status_text.value = "Install failed!"
+            set_button(ft.FilledButton("Retry", icon=ft.Icons.REFRESH, on_click=on_install_clicked))
+
+    def on_update_clicked(e):
+        status_text.value = "Downloading update..."
+        progress_bar.visible = True
+        progress_bar.value = 0
+        progress_text.visible = True
+        progress_text.value = "0%"
+        set_button(ft.FilledButton("Downloading...", icon=ft.Icons.DOWNLOAD, disabled=True))
 
         def progress_callback(blocks, block_size, total_size):
             if total_size > 0:
@@ -33,15 +51,19 @@ def main(page: ft.Page):
                 progress_text.value = f"{int(percent * 100)}%"
                 page.update()
 
-        success = perform_update(download_url_ref[0], progress_callback)
+        success = download_update(download_url_ref[0], progress_callback)
         if success:
-            status_text.value = "Update applied. Restart manually."
+            status_text.value = "Download complete! Ready to install."
+            progress_bar.value = 1.0
+            progress_text.value = "100%"
+            page.update()
+            set_button(ft.FilledButton("Install Update", icon=ft.Icons.SYSTEM_UPDATE, on_click=on_install_clicked))
         else:
-            status_text.value = "Update failed!"
-        page.update()
+            status_text.value = "Download failed!"
+            set_button(ft.FilledButton("Retry", icon=ft.Icons.REFRESH, on_click=on_update_clicked))
 
     def on_check_updates(e):
-        update_button.disabled = True
+        set_button(ft.FilledButton("Checking...", icon=ft.Icons.SEARCH, disabled=True))
         status_text.value = "Checking for updates..."
         page.update()
 
@@ -50,19 +72,12 @@ def main(page: ft.Page):
         if latest_version and download_url:
             status_text.value = f"Update {latest_version} found!"
             download_url_ref[0] = download_url
-            # Replace button entirely
-            page.controls[0].controls[3] = ft.FilledButton(
-                "Update",
-                icon=ft.Icons.DOWNLOAD,
-                on_click=on_update_clicked
-            )
+            set_button(ft.FilledButton("Update", icon=ft.Icons.DOWNLOAD, on_click=on_update_clicked))
         else:
             status_text.value = f"You are up to date! ({CURRENT_VERSION})"
-            update_button.disabled = False
+            set_button(ft.FilledButton("Check for Updates", icon=ft.Icons.SYSTEM_UPDATE, on_click=on_check_updates))
 
-        page.update()
-
-    update_button = ft.FilledButton("Check for Updates", icon=ft.Icons.SYSTEM_UPDATE, on_click=on_check_updates)
+    check_button = ft.FilledButton("Check for Updates", icon=ft.Icons.SYSTEM_UPDATE, on_click=on_check_updates)
 
     page.add(
         ft.Column(
@@ -70,8 +85,8 @@ def main(page: ft.Page):
                 ft.Icon(ft.Icons.ROCKET_LAUNCH, size=50, color=ft.Colors.BLUE_400),
                 status_text,
                 ft.Container(height=20),
-                update_button,
-                ft.Row([progress_bar, progress_text], alignment=ft.MainAxisAlignment.CENTER)
+                check_button,
+                ft.Row([progress_bar, ft.Container(width=10), progress_text], alignment=ft.MainAxisAlignment.CENTER)
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
