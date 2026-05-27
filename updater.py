@@ -104,7 +104,7 @@ echo "Waiting for app to close..."
 sleep 2
 
 echo "Replacing files in {app_dir}..."
-rm -rf "{app_dir}"/*
+find "{app_dir}" -mindepth 1 -delete
 
 echo "Copying new files from {extract_path}..."
 NEW_APP_DIR="{extract_path}"
@@ -119,7 +119,7 @@ else
 fi
 
 echo "Using NEW_APP_DIR: $NEW_APP_DIR"
-cp -r "$NEW_APP_DIR"/. "{app_dir}"/
+cp -a "$NEW_APP_DIR"/. "{app_dir}"/
 
 echo "Setting executable permissions..."
 chmod +x "{app_dir}/flet_lamzing"
